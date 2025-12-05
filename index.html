@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD) - iOS/Android Ready</title>
+    <title>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD) - iOS/Android Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -11,18 +11,55 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; color: #333; min-height: 100vh; }
         .container { max-width: 1200px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
         header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
-        h1 { color: #007bff; font-weight: 700; }
-        h2 { color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; }
+        h1 { color: #007bff; font-weight: 700; font-size: 1.5rem; }
+        h2 { color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; font-size: 1.2rem; }
         
         /* Input & Selection */
         .user-info, .part-selection { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        #inputUserName { padding: 10px; max-width: 300px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; width: 100%; }
+        #inputUserName { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; width: 100%; box-sizing: border-box; }
         .part-selection { border-top: none; padding-top: 0; }
 
-        /* Radio Groups */
-        .group-radio-option { display: inline-block; cursor: pointer; padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; transition: all 0.2s; font-size: 0.9em; margin: 5px; }
-        .group-radio-input:checked + .group-radio-option { background-color: #007bff; color: white; border-color: #007bff; font-weight: 700; }
-        .group-radio-input { display: none; }
+        /* --- Radio Groups (Fixed for iOS) --- */
+        #tsrGroupSelection { 
+            text-align: center; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            justify-content: center; 
+            margin-top: 10px;
+        }
+        
+        /* ซ่อนปุ่ม Radio วงกลมเดิม */
+        .group-radio-input { 
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* สร้างปุ่มใหม่ที่สวยงาม */
+        .group-radio-option { 
+            display: inline-block; 
+            cursor: pointer; 
+            padding: 10px 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 20px; 
+            background-color: #f8f9fa;
+            color: #555;
+            font-size: 0.9em; 
+            transition: all 0.2s ease-in-out;
+            user-select: none; /* ป้องกันการคลุมดำข้อความบนมือถือ */
+            -webkit-tap-highlight-color: transparent; /* ลบสีเทาเวลากดบน iOS */
+        }
+
+        /* เมื่อถูกเลือก (Checked) */
+        .group-radio-input:checked + .group-radio-option { 
+            background-color: #007bff; 
+            color: white; 
+            border-color: #007bff; 
+            font-weight: 700; 
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+        }
 
         /* Buttons */
         .part-buttons { display: flex; gap: 15px; flex-wrap: wrap; }
@@ -68,7 +105,7 @@
     <div class="container">
         <header>
             <h1>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD)</h1>
-            <p>ระบบรองรับ iOS และ Android - กรุณาทำแบบทดสอบให้ครบ 90 ข้อ</p>
+            <p>ระบบรองรับ iOS และ Android - พร้อมใช้งานทันที</p>
         </header>
 
         <div id="mainAlert" class="alert info"></div>
@@ -79,9 +116,25 @@
             <input type="text" id="inputUserName" onchange="saveUserName()" placeholder="กรุณากรอกชื่อ-นามสกุล/รหัสพนักงาน" required>
             
             <div style="margin-top: 20px;">
-                <label style="font-weight: bold; display: block; margin-bottom: 5px;">เลือกกลุ่มพนักงาน (TSR Group):</label>
-                <div id="tsrGroupSelection" style="text-align: center;"></div>
-            </div>
+                <label style="font-weight: bold; display: block; margin-bottom: 10px;">เลือกกลุ่มพนักงาน (TSR Group):</label>
+                
+                <div id="tsrGroupSelection">
+                    <input type="radio" id="tsrGroup0" name="tsrGroup" value="0" class="group-radio-input" onchange="handleGroupChange(0)" checked>
+                    <label for="tsrGroup0" class="group-radio-option">Trainer Group (ฝึกซ้อม)</label>
+
+                    <input type="radio" id="tsrGroup1" name="tsrGroup" value="1" class="group-radio-input" onchange="handleGroupChange(1)">
+                    <label for="tsrGroup1" class="group-radio-option">พนักงานกลุ่มเนอสเซอรี่</label>
+
+                    <input type="radio" id="tsrGroup2" name="tsrGroup" value="2" class="group-radio-input" onchange="handleGroupChange(2)">
+                    <label for="tsrGroup2" class="group-radio-option">New TSRs Onboarding</label>
+
+                    <input type="radio" id="tsrGroup3" name="tsrGroup" value="3" class="group-radio-input" onchange="handleGroupChange(3)">
+                    <label for="tsrGroup3" class="group-radio-option">New TSRs</label>
+
+                    <input type="radio" id="tsrGroup4" name="tsrGroup" value="4" class="group-radio-input" onchange="handleGroupChange(4)">
+                    <label for="tsrGroup4" class="group-radio-option">Existing TSRs</label>
+                </div>
+                </div>
         </div>
 
         <div class="part-selection">
@@ -152,20 +205,20 @@
         let shuffledQuestions = []; 
         let currentIndex = 0;
         let currentBlobUrl = null; 
-        
-        // ** IOS Fix Variables **
         let recordedMimeType = 'audio/webm'; 
         let recordedExtension = 'webm';
 
         // --- User & Group Data ---
         const tsrGroups = [
-            { id: 0, name_th: "Trainer Group (ฝึกซ้อม)", name_en: "Trainer Group", description: "ใช้สำหรับการฝึกซ้อมของเทรนเนอร์หรือผู้ประเมิน" },
-            { id: 1, name_th: "พนักงานกลุ่มเนอสเซอรี่", name_en: "Nursery Group", description: "พนักงานใหม่ที่อยู่ระหว่างการฝึกอบรมเบื้องต้น" },
-            { id: 2, name_th: "New TSRs On boarding Group", name_en: "New TSRs Onboarding", description: "พนักงานใหม่ที่อยู่ระหว่างการเริ่มงานและฝึกปฏิบัติ" },
-            { id: 3, name_th: "New TSRs", name_en: "New TSRs", description: "พนักงานใหม่ที่ผ่านช่วง Onboarding แล้ว" },
-            { id: 4, name_th: "Existing TSRs", name_en: "Existing TSRs", description: "พนักงานที่มีประสบการณ์แล้ว" }
+            { id: 0, name_th: "Trainer Group (ฝึกซ้อม)" },
+            { id: 1, name_th: "พนักงานกลุ่มเนอสเซอรี่" },
+            { id: 2, name_th: "New TSRs On boarding Group" },
+            { id: 3, name_th: "New TSRs" },
+            { id: 4, name_th: "Existing TSRs" }
         ];
-        let selectedTsrGroup = null; 
+        
+        // Default to Trainer Group (Index 0) to prevent empty selection error
+        let selectedTsrGroup = tsrGroups[0]; 
         let currentUserId = null; 
         const USER_ID_KEY = 'voice_hd_user_id';
 
@@ -183,7 +236,7 @@
         const requiredAnswer = document.getElementById('requiredAnswer');
         const sendQuestionBtn = document.getElementById('sendQuestionBtn'); 
 
-        // --- Questions Data (90 ข้อ - รวมให้ครบแล้ว) ---
+        // --- Questions Data ---
         const questions = {
             part1: [
                 { id: "P1Q1", part: 1, q: "ไม่สนใจครับ/ค่ะ ต้องขอโทษด้วย ขอวางสายเลยนะครับ/คะ", a: "เข้าใจเลยค่ะ/ครับ ว่าอาจจะยังไม่สนใจในตอนนี้ แต่ที่โทรมาหาคุณลูกค้าวันนี้เป็นโครงการพิเศษที่ **ไม่ได้เป็นการขายตรง** ค่ะ/ครับ เป็นเพียงการ **มอบสิทธิประโยชน์** ที่ใช้เวลาอธิบายแค่ 1 นาทีเท่านั้น ถ้าไม่ตรงใจ คุณลูกค้าสามารถวางสายได้เลยค่ะ/ครับ" },
@@ -296,6 +349,15 @@
             checkSubmitButtonStatus();
         }
 
+        // *** Function to Handle Radio Change ***
+        window.handleGroupChange = function(groupId) {
+            const group = tsrGroups.find(g => g.id === groupId);
+            if(group) {
+                selectedTsrGroup = group;
+                // Highlight UI logic is handled by CSS (:checked)
+            }
+        }
+
         function initializeUser() {
             let userId = localStorage.getItem(USER_ID_KEY);
             if (!userId) {
@@ -305,26 +367,7 @@
             currentUserId = userId;
         }
         
-        function renderTsrGroupRadios() {
-            const groupDiv = document.getElementById('tsrGroupSelection');
-            if (!groupDiv) return;
-            groupDiv.innerHTML = ''; 
-            tsrGroups.forEach((group, index) => {
-                const isChecked = (index === 0);
-                const input = document.createElement('input');
-                input.type = 'radio'; input.id = `tsrGroup${group.id}`; input.className = 'group-radio-input';
-                input.name = 'tsrGroup'; input.value = group.id; input.checked = isChecked;
-                const label = document.createElement('label');
-                label.htmlFor = `tsrGroup${group.id}`; label.className = 'group-radio-option'; 
-                label.textContent = group.name_th;
-                groupDiv.appendChild(input); groupDiv.appendChild(label);
-                if (isChecked) selectedTsrGroup = group;
-            });
-            groupDiv.addEventListener('change', (event) => {
-                const selectedId = parseInt(event.target.value);
-                selectedTsrGroup = tsrGroups.find(g => g.id === selectedId);
-            });
-        }
+        // (Removed renderTsrGroupRadios because it's now hardcoded in HTML)
 
         async function logSessionStart(userName) {
             if (!supabase || !selectedTsrGroup) return false;
@@ -342,11 +385,9 @@
             const partNum = partKey.replace('part', 'P');
             const safeUserName = userName.replace(/[^a-zA-Z0-9ก-ฮเ-์]/g, '_');
             
-            // ใช้ Extension ที่ตรวจสอบมาแล้ว (mp4 สำหรับ iOS, webm สำหรับ Android)
             const fileName = `${safeUserName}_${partNum}_${questionId}_${Date.now()}.${recordedExtension}`;
             const filePath = `${partKey}/${questionId}/${fileName}`; 
             
-            // ระบุ ContentType ให้ชัดเจน เพื่อให้ Browser เล่นได้
             const audioFile = new File([fileBlob], fileName, { type: recordedMimeType });
 
             const { error } = await supabase.storage.from('responses').upload(filePath, audioFile, {
@@ -406,7 +447,6 @@
                 currentBlobUrl = URL.createObjectURL(status.blob);
                 playbackAudio.src = currentBlobUrl; 
                 playbackAudio.style.display = 'block';
-                // บังคับ load ใหม่เพื่อให้ iOS รู้จักไฟล์
                 playbackAudio.load();
                 
                 if (status.submitted) {
@@ -440,7 +480,17 @@
         window.loadPart = async function(partKey) { 
             const userName = inputUserName.value.trim();
             if (!userName) return showAlert('กรุณากรอกชื่อก่อนเริ่ม', 'warning');
-            if (!selectedTsrGroup) return showAlert('กรุณาเลือกกลุ่ม TSR', 'warning');
+            
+            // Check selectedTsrGroup (which is now defaulted, so shouldn't fail)
+            if (!selectedTsrGroup) {
+                 // Double check logic just in case
+                 const checkedRadio = document.querySelector('input[name="tsrGroup"]:checked');
+                 if(checkedRadio) {
+                    selectedTsrGroup = tsrGroups.find(g => g.id === parseInt(checkedRadio.value));
+                 } else {
+                    return showAlert('กรุณาเลือกกลุ่ม TSR', 'warning');
+                 }
+            }
 
             window.saveUserName(); 
             loadingOverlay.style.display = 'flex';
@@ -450,7 +500,6 @@
 
             currentPart = partKey;
             
-            // ตรวจสอบข้อมูลคำถาม (ตอนนี้มี Data ครบแล้ว จึงไม่น่ามีปัญหา)
             if(!questions[currentPart] || questions[currentPart].length === 0) { 
                 showAlert("ไม่พบข้อมูลคำถาม (System Error)", "error"); return; 
             }
@@ -479,7 +528,7 @@
             } finally { updateQuestionUI(question); }
         };
 
-        // --- Recording Functions (SUPER FIX FOR IOS) ---
+        // --- Recording Functions (IOS/Android) ---
         function isIOS() {
             return [
                 'iPad Simulator', 'iPhone Simulator', 'iPod Simulator',
@@ -493,16 +542,12 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 
-                // *** LOGIC ใหม่สำหรับการแยก OS ***
                 if (isIOS()) {
-                    // iOS Strategy: ไม่ระบุ mimeType ปล่อยให้ Safari เลือกเอง (จะเป็น mp4/aac โดยอัตโนมัติ)
-                    // การระบุ mimeType บน iOS มักทำให้เกิด bug ไฟล์เปล่า
                     mediaRecorder = new MediaRecorder(stream);
-                    recordedMimeType = 'audio/mp4';  // ตั้งค่าหลอกไว้สำหรับตอนสร้างไฟล์
-                    recordedExtension = 'mp4';       // นามสกุลสำหรับ iOS
+                    recordedMimeType = 'audio/mp4'; 
+                    recordedExtension = 'mp4';       
                     console.log("iOS detected: Using default recorder settings (mp4)");
                 } else {
-                    // Android/PC Strategy: ใช้ WebM ซึ่งเสถียรที่สุด
                     const mime = 'audio/webm;codecs=opus';
                     if (MediaRecorder.isTypeSupported(mime)) {
                          mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
@@ -519,20 +564,17 @@
                 mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
                 
                 mediaRecorder.onstart = () => {
-                    recordingStatus.textContent = `สถานะ: กำลังบันทึก (${isIOS() ? 'iOS Mode' : 'Standard Mode'})...`;
+                    recordingStatus.textContent = `สถานะ: กำลังบันทึก (${isIOS() ? 'iOS' : 'Android'})...`;
                     startRecBtn.disabled = true; stopRecBtn.disabled = false;
                     playbackAudio.style.display = 'none';
                 };
 
                 mediaRecorder.onstop = () => {
-                    // สร้าง Blob โดยใช้ MimeType ที่เรากำหนดไว้ตาม OS
                     const audioBlob = new Blob(audioChunks, { type: recordedMimeType });
                     audioChunks = [];
-                    
                     const qId = shuffledQuestions[currentIndex].id;
                     audioBlobs[currentPart][qId] = { blob: audioBlob, submitted: false }; 
                     stream.getTracks().forEach(track => track.stop());
-                    
                     updateQuestionUI(shuffledQuestions[currentIndex]); 
                     showAlert('บันทึกเสร็จสิ้น', 'info');
                 };
@@ -540,7 +582,7 @@
                 mediaRecorder.start();
             } catch (err) {
                 console.error("Mic Error:", err);
-                showAlert('ไม่สามารถเข้าถึงไมโครโฟนได้ (หากใช้ iOS ต้องเปิดผ่าน HTTPS และใช้ Safari เท่านั้น)', 'warning');
+                showAlert('ไม่สามารถเข้าถึงไมโครโฟนได้ (iOS ต้องใช้ Safari และ HTTPS เท่านั้น)', 'warning');
             }
         };
 
@@ -567,7 +609,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeUser();
             inputUserName.value = localStorage.getItem('examUserName') || '';
-            renderTsrGroupRadios();
+            // No need to call renderTsrGroupRadios anymore
             checkSubmitButtonStatus(); 
         });
     </script>
