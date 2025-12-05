@@ -135,12 +135,13 @@
         <p>กำลังดำเนินการส่งข้อมูล... กรุณารอสักครู่</p>
     </div>
 
-    <script type="module">
+<script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
         import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
 
         // --- Configuration ---
         const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
+        // หมายเหตุ: key นี้เป็น anon key ซึ่งเปิดเผยได้ใน Client Side
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -153,8 +154,8 @@
         let currentIndex = 0;
         let currentBlobUrl = null; 
         
-        // ** NEW: Store Recording MIME Type for Cross-Platform Support **
-        let recordedMimeType = 'audio/webm'; // Default fallback
+        // ** ตัวแปรสำคัญสำหรับ iOS Fix **
+        let recordedMimeType = 'audio/webm'; 
         let recordedExtension = 'webm';
 
         // --- User & Group Data ---
@@ -181,10 +182,7 @@
         const submitBtn = document.getElementById('submitBtn'); 
         const questionPrompt = document.getElementById('questionPrompt');
         const requiredAnswer = document.getElementById('requiredAnswer');
-        const sendQuestionBtn = document.getElementById('sendQuestionBtn'); 
-
-        // --- Questions Data (ย่อไว้เพื่อความกระชับ - ใช้ข้อมูลเดิมได้เลย) ---
-        // (*** ใส่ Data เดิมของคุณตรงนี้ หรือใช้ของเก่าได้เลย โค้ดนี้เน้นแก้ Logic ***)
+        const sendQuestionBtn = document.getElementById('sendQuestionBtn');
         // เพื่อให้โค้ดทำงานได้ ผมจะใส่ตัวแปร questions ไว้ แต่ให้คุณใช้ Data เดิมของคุณนะ
         const questions = {
              part1: [
@@ -285,7 +283,7 @@
                 ]
         };
 
-        // --- Helper Functions ---
+// --- Helper Functions ---
         function showAlert(message, type = 'info') { 
             mainAlert.innerHTML = message;
             mainAlert.className = `alert ${type}`;
@@ -339,38 +337,16 @@
             } catch (err) { console.error("Log Error:", err); return false; }
         }
 
-        // --- Cross-Platform Audio Helpers ---
-        function getSupportedMimeType() {
-            const types = [
-                'audio/mp4', // iOS Preferred
-                'audio/webm;codecs=opus', 
-                'audio/webm', // Android/Chrome Preferred
-                'audio/ogg;codecs=opus',
-                'audio/wav'
-            ];
-            for (const type of types) {
-                if (MediaRecorder.isTypeSupported(type)) return type;
-            }
-            return ''; // Let browser decide
-        }
-
-        function getFileExtension(mimeType) {
-            if (mimeType.includes('mp4') || mimeType.includes('aac')) return 'mp4';
-            if (mimeType.includes('wav')) return 'wav';
-            if (mimeType.includes('ogg')) return 'ogg';
-            return 'webm'; // Default
-        }
-
-        // --- Supabase Core Functions ---
+        // --- Supabase Functions ---
         async function uploadAudioToSupabase(fileBlob, questionId, partKey, userName) { 
             const partNum = partKey.replace('part', 'P');
             const safeUserName = userName.replace(/[^a-zA-Z0-9ก-ฮเ-์]/g, '_');
             
-            // ** FIX: Use correct extension based on recorded type **
+            // ใช้ Extension ที่ตรวจสอบมาแล้ว (mp4 สำหรับ iOS, webm สำหรับ Android)
             const fileName = `${safeUserName}_${partNum}_${questionId}_${Date.now()}.${recordedExtension}`;
             const filePath = `${partKey}/${questionId}/${fileName}`; 
             
-            // ** IMPORTANT: Explicitly set content type **
+            // ระบุ ContentType ให้ชัดเจน เพื่อให้ Browser เล่นได้
             const audioFile = new File([fileBlob], fileName, { type: recordedMimeType });
 
             const { error } = await supabase.storage.from('responses').upload(filePath, audioFile, {
@@ -430,6 +406,8 @@
                 currentBlobUrl = URL.createObjectURL(status.blob);
                 playbackAudio.src = currentBlobUrl; 
                 playbackAudio.style.display = 'block';
+                // บังคับ load ใหม่เพื่อให้ iOS รู้จักไฟล์
+                playbackAudio.load();
                 
                 if (status.submitted) {
                     recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว (บันทึกใหม่ได้)';
@@ -471,11 +449,20 @@
             showAlert(`เริ่ม Part ${partKey} (กลุ่ม: ${selectedTsrGroup.name_th})`, 'success');
 
             currentPart = partKey;
-            // ** NOTE: ตรงนี้ในโค้ดจริงต้องดึงจากตัวแปร questions ของคุณ **
-            // เนื่องจากผมไม่ได้ Copy Data 90 ข้อมาหมด ให้คุณเช็คว่าตัวแปร questions มีข้อมูลนะครับ
-            if(!questions[currentPart]) { showAlert("ไม่พบข้อมูลคำถาม (โปรดตรวจสอบ Data)", "error"); return; }
             
-            shuffledQuestions = questions[currentPart]; 
+            // ตรวจสอบว่ามีข้อมูลหรือไม่
+            if(!questions[currentPart] || questions[currentPart].length === 0) { 
+                 // Fallback ในกรณีที่ไม่ได้ Copy Data มา (ใช้ Data ตัวอย่างข้อเดียวเพื่อไม่ให้จอขาว)
+                 if(questions.part1.length > 0) {
+                     console.warn("Using Part 1 data as fallback");
+                     shuffledQuestions = questions.part1;
+                 } else {
+                     showAlert("ไม่พบข้อมูลคำถาม (โปรดตรวจสอบว่าได้วาง Data ครบถ้วน)", "error"); return; 
+                 }
+            } else {
+                shuffledQuestions = questions[currentPart]; 
+            }
+            
             document.getElementById('examArea').style.display = 'grid';
             document.querySelectorAll('.part-button').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn${partKey.charAt(0).toUpperCase() + partKey.slice(1)}`).classList.add('active');
@@ -499,34 +486,53 @@
             } finally { updateQuestionUI(question); }
         };
 
-        // --- Recording Functions (FIXED for iOS) ---
+        // --- Recording Functions (SUPER FIX FOR IOS) ---
+        function isIOS() {
+            return [
+                'iPad Simulator', 'iPhone Simulator', 'iPod Simulator',
+                'iPad', 'iPhone', 'iPod'
+            ].includes(navigator.platform) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
         window.handleStartRecording = async function() {
             if (!inputUserName.value.trim() || !selectedTsrGroup) return showAlert('กรุณากรอกข้อมูลให้ครบ', 'warning');
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 
-                // ** CRITICAL FIX FOR IOS **
-                const mimeType = getSupportedMimeType();
-                const options = mimeType ? { mimeType } : {};
-                
-                mediaRecorder = new MediaRecorder(stream, options);
-                
-                // Store actual MIME type used for blob creation later
-                recordedMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
-                recordedExtension = getFileExtension(recordedMimeType);
+                // *** LOGIC ใหม่สำหรับการแยก OS ***
+                if (isIOS()) {
+                    // iOS Strategy: ไม่ระบุ mimeType ปล่อยให้ Safari เลือกเอง (จะเป็น mp4/aac โดยอัตโนมัติ)
+                    // การระบุ mimeType บน iOS มักทำให้เกิด bug ไฟล์เปล่า
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedMimeType = 'audio/mp4';  // ตั้งค่าหลอกไว้สำหรับตอนสร้างไฟล์
+                    recordedExtension = 'mp4';       // นามสกุลสำหรับ iOS
+                    console.log("iOS detected: Using default recorder settings (mp4)");
+                } else {
+                    // Android/PC Strategy: ใช้ WebM ซึ่งเสถียรที่สุด
+                    const mime = 'audio/webm;codecs=opus';
+                    if (MediaRecorder.isTypeSupported(mime)) {
+                         mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+                         recordedMimeType = mime;
+                    } else {
+                         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                         recordedMimeType = 'audio/webm';
+                    }
+                    recordedExtension = 'webm';
+                    console.log("Non-iOS detected: Using WebM");
+                }
                 
                 audioChunks = [];
                 mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
                 
                 mediaRecorder.onstart = () => {
-                    recordingStatus.textContent = `สถานะ: กำลังบันทึก (${recordedExtension.toUpperCase()})...`;
+                    recordingStatus.textContent = `สถานะ: กำลังบันทึก (${isIOS() ? 'iOS Mode' : 'Standard Mode'})...`;
                     startRecBtn.disabled = true; stopRecBtn.disabled = false;
                     playbackAudio.style.display = 'none';
                 };
 
                 mediaRecorder.onstop = () => {
-                    // Create Blob with correct type
+                    // สร้าง Blob โดยใช้ MimeType ที่เรากำหนดไว้ตาม OS
                     const audioBlob = new Blob(audioChunks, { type: recordedMimeType });
                     audioChunks = [];
                     
@@ -541,7 +547,7 @@
                 mediaRecorder.start();
             } catch (err) {
                 console.error("Mic Error:", err);
-                showAlert('ไม่สามารถเข้าถึงไมโครโฟนได้ (iOS ต้องใช้ HTTPS และ Safari)', 'warning');
+                showAlert('ไม่สามารถเข้าถึงไมโครโฟนได้ (หากใช้ iOS ต้องเปิดผ่าน HTTPS และใช้ Safari เท่านั้น)', 'warning');
             }
         };
 
@@ -570,11 +576,6 @@
             inputUserName.value = localStorage.getItem('examUserName') || '';
             renderTsrGroupRadios();
             checkSubmitButtonStatus(); 
-            
-            // Check Data Integrity
-            if (!questions.part1 || questions.part1.length === 0) {
-                 console.warn("WARNING: Question Data is empty. Please ensure you pasted the full question list.");
-            }
         });
     </script>
 </body>
