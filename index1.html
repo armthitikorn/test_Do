@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telesales Objection Simulator - Full Option (iOS Compatible)</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
+        .container { max-width: 1000px; margin-top: 30px; margin-bottom: 50px; }
+        .part-button { margin-right: 10px; margin-bottom: 10px; }
+        .question-item { background-color: #ffffff; border-left: 5px solid #0d6efd; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .question-title { font-weight: bold; color: #343a40; margin-bottom: 10px; }
+        .answer-area { margin-top: 15px; padding: 10px; border-top: 1px solid #dee2e6; display: none; }
+        .answer-area p { margin-bottom: 5px; white-space: pre-wrap; }
+        .audio-container { background-color: #e9ecef; border-radius: 5px; padding: 10px; margin-top: 10px; }
+        .play-audio-btn { background-color: #28a745; color: white; border: none; padding: 5px 15px; border-radius: 5px; margin-right: 10px; transition: background-color 0.3s; }
+        .play-audio-btn:hover { background-color: #1e7e34; }
+        .placeholder-link { font-style: italic; color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 class="text-center text-primary mb-4">ระบบจำลองการตอบข้อโต้แย้ง (Audio Ready)</h2>
+        <p class="text-center text-muted">รองรับการฟังเสียงบน iOS และ Android</p>
+        
+        <div class="mb-4">
+            <h4 class="mb-3">🎯 เลือกกลุ่มผู้ใช้งาน:</h4>
+            <div id="groupButtons">
+                <button class="btn btn-success part-button" onclick="showPart(1)"><i class="fas fa-seedling me-1"></i> Nursery</button>
+                <button class="btn btn-warning part-button" onclick="showPart(2)"><i class="fas fa-user-plus me-1"></i> New Onboarding</button>
+                <button class="btn btn-danger part-button" onclick="showPart(3)"><i class="fas fa-headset me-1"></i> New TSRs</button>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h4 class="mb-3">📚 เลือก Part การฝึกซ้อม:</h4>
+            <div id="partButtons"></div>
+        </div>
+
+        <div id="questionArea">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-hand-point-up me-2"></i> กรุณาเลือก **Nursery** หรือ **Part 1** เพื่อเริ่มการฝึกซ้อม
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        
+        // ข้อมูลคำถามและลิงก์เสียง (ใช้ Data เดิมของคุณได้เลย ตรงนี้ผมใส่ตัวอย่างไว้ให้)
+        const scripts = [
+            // --- Copy Data เดิม 90 ข้อมาวางทับตรงนี้ได้เลยครับ ---
+            { id: 1, part: 1, q: "ไม่สนใจครับ/ค่ะ ต้องขอโทษด้วย ขอวางสายเลยนะครับ/คะ", a: "เข้าใจเลยค่ะ/ครับ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q1/Sornkornchon_P1_P1Q1_1763381505325.webm" },
+             // ...
+             // (อย่าลืมเอาข้อมูลเดิมมาใส่นะครับ)
+        ];
+
+        // --- เพิ่มข้อมูลตัวอย่างเพื่อให้สคริปต์ทำงานได้ (ลบออกเมื่อใส่ข้อมูลจริง) ---
+        // (ผมใส่ Script เดิมบางส่วนเพื่อให้ปุ่มทำงานได้)
+        const demoData = [
+            { id: 1, part: 1, q: "ไม่สนใจครับ/ค่ะ...", a: "เข้าใจเลยค่ะ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q1/Sornkornchon_P1_P1Q1_1763381505325.webm" },
+            { id: 31, part: 2, q: "โรคประจำตัว...", a: "ถามได้ดีครับ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q1/TT_K_P2_P2Q1_1763188237484.webm" },
+            { id: 61, part: 3, q: "ขอคิดดูก่อน...", a: "เข้าใจครับ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q1/Sornkornchon_P3_P3Q1_1763384703648.webm" }
+        ];
+        
+        // ใช้ scripts ถ้ามีข้อมูล ถ้าไม่มีใช้ demoData (กัน Error)
+        const activeScripts = (scripts.length > 1) ? scripts : demoData;
+
+        // --- Functions ---
+        
+        function showPart(partNumber) {
+            const questionArea = document.getElementById('questionArea');
+            questionArea.innerHTML = '';
+            
+            const filteredScripts = activeScripts.filter(s => s.part === partNumber);
+            const partName = (partNumber === 1) ? "Nursery (Part 1)" : (partNumber === 2) ? "New Onboarding (Part 2)" : "New TSRs (Part 3)";
+            
+            if (filteredScripts.length === 0) {
+                questionArea.innerHTML = `<div class="alert alert-warning">ไม่พบรายการข้อโต้แย้งสำหรับ Part ${partNumber} (กรุณาตรวจสอบ Data ใน Code)</div>`;
+                return;
+            }
+
+            questionArea.innerHTML += `<h3 class="text-center text-secondary mb-4">แสดงชุดฝึกอบรม: ${partName}</h3>`;
+
+            filteredScripts.forEach((script) => {
+                const globalIndex = script.id; // Use ID as index
+                const item = document.createElement('div');
+                item.className = 'question-item';
+
+                const isPlaceholder = script.audioUrl.includes('placeholder.com');
+                
+                let audioButtonHtml = '';
+                if (!isPlaceholder) {
+                    audioButtonHtml = `<button class="play-audio-btn" onclick="playAudio(${globalIndex})">
+                                        <i class="fas fa-volume-up"></i> ฟังเสียงตัวอย่าง
+                                    </button>`;
+                } else {
+                    audioButtonHtml = `<span class="text-muted placeholder-link"><i class="fas fa-exclamation-circle me-1"></i> (ไม่มีไฟล์เสียง)</span>`;
+                }
+
+                // ** KEY FIX for iOS: Removed type="audio/mpeg" to let browser detect webm/mp4 automatically **
+                item.innerHTML = `
+                    <div class="question-title">
+                        <i class="fas fa-comment-dots text-danger me-2"></i> ${globalIndex}. ลูกค้าโต้แย้ง: **"${script.q}"**
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        ${audioButtonHtml}
+                        <button class="btn btn-outline-secondary btn-sm ms-3" onclick="toggleAnswer(${globalIndex})">
+                            <i class="fas fa-eye"></i> ดู/ซ้อมคำตอบ
+                        </button>
+                    </div>
+                    <div id="answer-${globalIndex}" class="answer-area">
+                        <p><strong>คำตอบพนักงาน:</strong> ${script.a}</p>
+                        <div class="audio-container">
+                           <audio id="audio-${globalIndex}" controls class="w-100" playsinline>
+                                <source src="${script.audioUrl}"> 
+                                เบราว์เซอร์ของคุณไม่รองรับการเล่นไฟล์เสียง
+                            </audio>
+                        </div>
+                    </div>
+                `;
+                questionArea.appendChild(item);
+            });
+        }
+
+        function initializeSimulator() {
+            const partButtonsDiv = document.getElementById('partButtons');
+            // Mock parts for initialization
+            const parts = [1, 2, 3];
+            
+            parts.forEach(part => {
+                const button = document.createElement('button');
+                button.className = 'btn btn-outline-primary part-button';
+                button.textContent = `Part ${part}`;
+                button.onclick = () => showPart(part); 
+                partButtonsDiv.appendChild(button);
+            });
+            showPart(1); // Default Load
+        }
+
+        function toggleAnswer(index) {
+            const answerDiv = document.getElementById(`answer-${index}`);
+            if (answerDiv) {
+                const isVisible = answerDiv.style.display === 'block';
+                answerDiv.style.display = isVisible ? 'none' : 'block';
+                if (isVisible) stopAudio(index);
+            }
+        }
+
+        function playAudio(index) {
+            // Stop others
+            document.querySelectorAll('audio').forEach(a => {
+                if (a.id !== `audio-${index}`) {
+                    a.pause();
+                    a.currentTime = 0;
+                }
+            });
+
+            const player = document.getElementById(`audio-${index}`);
+            const answerDiv = document.getElementById(`answer-${index}`);
+            
+            // Auto open answer to show player
+            if (answerDiv.style.display !== 'block') {
+                answerDiv.style.display = 'block';
+            }
+            
+            if (player) {
+                player.play().catch(e => alert("ไม่สามารถเล่นไฟล์เสียงได้: " + e.message));
+            }
+        }
+
+        function stopAudio(index) {
+            const player = document.getElementById(`audio-${index}`);
+            if (player) { player.pause(); player.currentTime = 0; }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeSimulator);
+
+    </script>
+</body>
+</html>
