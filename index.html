@@ -3,404 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice HD (iOS/Android Fixed)</title>
+    <title>Voice HD (Debug Mode)</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- Global Styles --- */
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; color: #333; min-height: 100vh; -webkit-text-size-adjust: 100%; }
-        .container { max-width: 1200px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        h1 { color: #007bff; font-weight: 700; font-size: 1.4rem; margin: 0; }
-        h2 { color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; font-size: 1.1rem; margin-top: 0; }
+        /* --- Styles --- */
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; min-height: 100vh; }
+        .container { max-width: 800px; margin: 10px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        /* Status Bar */
-        #systemStatus { background: #333; color: #fff; padding: 5px; text-align: center; font-size: 0.8rem; border-radius: 4px; margin-bottom: 10px; display: none; }
-        
-        /* Inputs */
-        .user-info, .part-selection { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none; }
-        
-        /* Radio Buttons (iOS Friendly) */
-        #tsrGroupSelection { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; }
-        .group-radio-item { position: relative; }
-        .group-radio-input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .group-radio-label { 
-            display: block; padding: 10px 15px; background: #f0f2f5; border: 1px solid #ddd; 
-            border-radius: 20px; font-size: 0.9rem; color: #555; cursor: pointer; transition: all 0.2s; 
+        /* Debug Console (กล่องดำสำหรับจับ Error) */
+        #debugConsole { 
+            background: #000; color: #0f0; font-family: monospace; 
+            padding: 10px; margin: 10px; border-radius: 5px; 
+            min-height: 50px; font-size: 12px; white-space: pre-wrap; word-wrap: break-word;
         }
-        .group-radio-input:checked + .group-radio-label { background: #007bff; color: white; border-color: #007bff; font-weight: bold; box-shadow: 0 2px 5px rgba(0,123,255,0.3); }
 
-        /* Part Buttons */
-        .part-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .part-button { padding: 15px; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        .part-button:active, .part-button.active { background: #007bff; color: white; }
+        .btn { padding: 15px; width: 100%; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
+        .btn-part { background: #fff; border: 2px solid #007bff; color: #007bff; }
+        .btn-part:active { background: #007bff; color: white; }
         
-        /* Exam Area */
-        #examArea { display: none; margin-top: 20px; }
-        .question-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; }
-        .q-text { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #2196f3; }
-        .a-text { background: #fff3e0; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800; }
+        #examPage { display: none; padding-top: 20px; border-top: 2px solid #eee; }
+        .input-box { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px; box-sizing: border-box; }
         
-        /* Recording Controls */
-        .controls { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; }
-        .btn-rec { background: #28a745; }
-        .btn-stop { background: #dc3545; }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        
-        /* Audio Player */
-        #playbackContainer { margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; display: none; }
-        audio { width: 100%; margin-bottom: 10px; }
-        
-        /* Alert */
-        #mainAlert { padding: 15px; background: #ffebee; color: #c62828; border-radius: 8px; margin-bottom: 20px; display: none; text-align: center; }
-
-        @media (max-width: 600px) {
-            .part-buttons { grid-template-columns: 1fr; }
-            .container { margin: 10px; padding: 15px; }
+        /* Loading Overlay */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); z-index: 999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; font-size: 1.2em; color: #007bff;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="systemStatus">Checking System...</div>
-        <header>
-            <h1>ระบบทดสอบ Voice HD</h1>
-            <p style="font-size: 0.9rem; color: #666;">รองรับ iOS/Android (V.Final)</p>
-        </header>
+    <div id="debugConsole">System Log initializing...</div>
 
-        <div id="mainAlert"></div>
-
-        <div class="user-info">
-            <h2>1. ข้อมูลผู้เข้าสอบ</h2>
-            <input type="text" id="inputUserName" placeholder="กรอกชื่อ-นามสกุล / รหัสพนักงาน">
-            
-            <div style="margin-top: 15px; text-align: center;">
-                <label style="font-weight: bold; font-size: 0.9rem;">เลือกกลุ่ม (แตะด้านล่าง):</label>
-                <div id="tsrGroupSelection">
-                    <div class="group-radio-item">
-                        <input type="radio" name="tsrGroup" id="g0" value="0" class="group-radio-input" checked>
-                        <label for="g0" class="group-radio-label">Trainer (ฝึกซ้อม)</label>
-                    </div>
-                    <div class="group-radio-item">
-                        <input type="radio" name="tsrGroup" id="g1" value="1" class="group-radio-input">
-                        <label for="g1" class="group-radio-label">Nursery</label>
-                    </div>
-                    <div class="group-radio-item">
-                        <input type="radio" name="tsrGroup" id="g2" value="2" class="group-radio-input">
-                        <label for="g2" class="group-radio-label">New Onboarding</label>
-                    </div>
-                    <div class="group-radio-item">
-                        <input type="radio" name="tsrGroup" id="g3" value="3" class="group-radio-input">
-                        <label for="g3" class="group-radio-label">New TSRs</label>
-                    </div>
-                    <div class="group-radio-item">
-                        <input type="radio" name="tsrGroup" id="g4" value="4" class="group-radio-input">
-                        <label for="g4" class="group-radio-label">Existing TSRs</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="part-selection">
-            <h2>2. เลือก Part เพื่อเริ่มสอบ</h2>
-            <div class="part-buttons">
-                <button id="btnPart1" class="part-button">Part 1</button>
-                <button id="btnPart2" class="part-button">Part 2</button>
-                <button id="btnPart3" class="part-button">Part 3</button>
-            </div>
-        </div>
-
-        <div id="examArea">
-            <div class="question-box">
-                <h3 id="qTitle" style="margin-top:0;">คำถาม</h3>
-                
-                <div class="q-text">
-                    <strong>ลูกค้าถาม:</strong> <span id="qText">...</span>
-                </div>
-                <div class="a-text">
-                    <strong>ตอบ:</strong> <span id="aText">...</span>
-                </div>
-
-                <div id="statusText" style="text-align:center; font-weight:bold; color:#007bff; margin:15px 0;">
-                    สถานะ: พร้อมบันทึก
-                </div>
-
-                <div class="controls">
-                    <button id="btnRecord" class="btn btn-rec">🎙️ เริ่มอัดเสียง</button>
-                    <button id="btnStop" class="btn btn-stop" disabled>⏹️ หยุด</button>
-                </div>
-
-                <div id="playbackContainer">
-                    <audio id="audioPlayer" controls playsinline></audio>
-                    <button id="btnSend" class="btn" style="background:#007bff; width:100%; margin-top:10px;">📤 ยืนยันส่งคำตอบข้อนี้</button>
-                </div>
-
-                <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <button id="btnPrev" class="part-button" style="padding:5px 15px;">&lt; ข้อก่อนหน้า</button>
-                        <span id="qProgress">1 / 30</span>
-                        <button id="btnNext" class="part-button" style="padding:5px 15px;">ข้อถัดไป &gt;</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div id="loadingScreen">
+        <div>⏳ กำลังโหลดระบบ...</div>
+        <div style="font-size: 0.8em; color: #666; margin-top: 10px;">กรุณารอสักครู่</div>
     </div>
 
-    <script type="module">
-        // --- Error Trap (จับ Error แสดงบนหน้าจอ) ---
-        window.onerror = function(msg, url, line) {
-            const errBox = document.getElementById('mainAlert');
-            errBox.style.display = 'block';
-            errBox.innerHTML = `⚠️ เกิดข้อผิดพลาดทางเทคนิค:<br>${msg}`;
-            document.getElementById('systemStatus').style.background = 'red';
-            document.getElementById('systemStatus').textContent = 'System Error';
+    <div class="container">
+        <h2 style="text-align:center; color:#007bff;">Voice HD (Diagnostic)</h2>
+        
+        <div id="setupPage">
+            <p>1. ชื่อของคุณ:</p>
+            <input type="text" id="uName" class="input-box" placeholder="พิมพ์ชื่อทดสอบที่นี่...">
+            
+            <p>2. เลือก Part เพื่อเริ่ม:</p>
+            <button class="btn btn-part" id="btnP1">เข้าทำแบบทดสอบ Part 1</button>
+            <button class="btn btn-part" id="btnP2">เข้าทำแบบทดสอบ Part 2</button>
+            <button class="btn btn-part" id="btnP3">เข้าทำแบบทดสอบ Part 3</button>
+        </div>
+
+        <div id="examPage">
+            <h3 id="qHeader">คำถาม Part 1</h3>
+            <div style="background:#e3f2fd; padding:15px; border-radius:5px; margin-bottom:15px;">
+                <strong>ถาม:</strong> <span id="qText">...</span>
+            </div>
+            
+            <button class="btn" style="background:#28a745; color:white;" id="btnRec">🎙️ ลองกดอัดเสียง (Test Mic)</button>
+            <button class="btn" style="background:#dc3545; color:white;" id="btnStop" disabled>⏹️ หยุดอัด</button>
+            
+            <div id="audioBox" style="margin-top:15px; display:none;">
+                <audio id="audioPlayer" controls style="width:100%"></audio>
+                <p style="color:green; text-align:center;">บันทึกสำเร็จ! (iOS Compatible)</p>
+            </div>
+            
+            <button class="btn" style="background:#6c757d; color:white; margin-top:20px;" onclick="location.reload()">🔄 รีเฟรชเพื่อเริ่มใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ระบบดักจับ Error (สำคัญที่สุด) ---
+        const debugBox = document.getElementById('debugConsole');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugBox.innerHTML += `\n[${time}] ${msg}`;
+            console.log(msg);
+        }
+        
+        window.onerror = function(message, source, lineno, colno, error) {
+            log(`❌ ERROR: ${message} (Line: ${lineno})`);
+            document.getElementById('loadingScreen').style.display = 'none'; // ปิด Loading ให้เห็น Error
             return false;
         };
 
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
-
-        // --- Config ---
-        const supabase = createClient(
-            'https://wzwyotzzxycqfwercakh.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'
-        );
-
-        // --- Data (ย่อส่วน Data เพื่อความเสถียร แต่ใช้งานได้จริง) ---
-        // *** สำคัญ: ผมใส่ข้อมูลให้ครบแล้ว ไม่ต้องเติมเอง ***
-        const questionsDB = {
-            part1: [
-                { id: "P1Q1", q: "ไม่สนใจครับ/ค่ะ ขอวางสายเลย", a: "เข้าใจเลยค่ะ แต่โครงการนี้ไม่ใช่การขายตรง เป็นสิทธิพิเศษใช้เวลาแค่ 1 นาทีค่ะ" },
-                { id: "P1Q2", q: "มีประกันครบแล้วค่ะ", a: "เยี่ยมเลยค่ะ แต่แผนนี้เน้นค่าห้องสูงสุดที่แผนเดิมอาจยังไม่ครอบคลุมนะคะ" },
-                { id: "P1Q3", q: "ไม่สะดวกตอนนี้", a: "ขออนุญาตให้ข้อมูลสั้นๆ เพื่อรักษาสิทธิ์ไว้ก่อนตัดสินใจภายหลังได้ค่ะ" },
-                // ... (ใส่ 3 ข้อตัวอย่างเพื่อให้ระบบเบา ถ้าต้องการ 90 ข้อ ให้แจ้งผมอีกทีนะครับ แต่ 3 ข้อนี้จะทำให้ทดสอบระบบผ่านแน่นอน)
-            ],
-            part2: [
-                { id: "P2Q1", q: "โรคประจำตัวคุ้มครองไหม?", a: "เราดูระยะเวลาที่เป็นค่ะ ถ้าเป็นมานานแล้วอาจมีข้อยกเว้น แต่ขอสอบถามประวัติเพื่อเช็คให้ค่ะ" },
-                { id: "P2Q2", q: "ต้องสำรองจ่ายไหม?", a: "ไม่ต้องค่ะ เรามีแฟกซ์เคลม ยื่นบัตรใบเดียวรักษาได้เลย" }
-            ],
-            part3: [
-                { id: "P3Q1", q: "ขอคิดดูก่อน", a: "การตัดสินใจวันนี้ช่วยล็อกเบี้ยราคาพิเศษไว้นะคะ" }
-            ]
+        // --- 2. ข้อมูลคำถาม (Hardcode เพื่อความชัวร์) ---
+        const DB = {
+            part1: [ { q: "ทดสอบ Part 1 ข้อที่ 1: สวัสดีครับ สนใจรับฟังข้อมูลไหม?", a: "แนวทางตอบ..." } ],
+            part2: [ { q: "ทดสอบ Part 2 ข้อที่ 1: เรื่องโรคประจำตัว?", a: "แนวทางตอบ..." } ],
+            part3: [ { q: "ทดสอบ Part 3 ข้อที่ 1: ขอคิดดูก่อน?", a: "แนวทางตอบ..." } ]
         };
-        // (หมายเหตุ: เพื่อให้โค้ด Copy ง่ายและไม่ Error ผมใส่ตัวอย่างให้ Part ละนิด ถ้าทดสอบผ่านแล้วค่อยเติม Data ยาวๆ ได้ครับ)
 
-        // --- State ---
-        let currentPart = null;
-        let currentList = [];
-        let curIndex = 0;
+        // --- 3. ตัวแปรระบบ ---
         let mediaRecorder;
         let audioChunks = [];
-        let recordedBlob = null;
-        let userId = localStorage.getItem('voice_hd_uid') || uuidv4();
-        localStorage.setItem('voice_hd_uid', userId);
-
-        // --- DOM Cache ---
-        const els = {
-            status: document.getElementById('systemStatus'),
-            alert: document.getElementById('mainAlert'),
-            name: document.getElementById('inputUserName'),
-            examArea: document.getElementById('examArea'),
-            qTitle: document.getElementById('qTitle'),
-            qText: document.getElementById('qText'),
-            aText: document.getElementById('aText'),
-            recBtn: document.getElementById('btnRecord'),
-            stopBtn: document.getElementById('btnStop'),
-            sendBtn: document.getElementById('btnSend'),
-            player: document.getElementById('audioPlayer'),
-            playerBox: document.getElementById('playbackContainer'),
-            statusText: document.getElementById('statusText'),
-            progress: document.getElementById('qProgress')
-        };
-
-        // --- Initialization ---
+        
+        // --- 4. ฟังก์ชันการทำงาน ---
         document.addEventListener('DOMContentLoaded', () => {
-            els.status.style.display = 'block';
-            els.status.textContent = 'ระบบพร้อมใช้งาน (System Ready)';
-            els.status.style.background = '#28a745';
+            log("DOM Loaded.");
             
-            // Bind Buttons (Event Listeners - iOS Safe)
-            document.getElementById('btnPart1').addEventListener('click', () => loadPart('part1'));
-            document.getElementById('btnPart2').addEventListener('click', () => loadPart('part2'));
-            document.getElementById('btnPart3').addEventListener('click', () => loadPart('part3'));
+            // ซ่อน Loading Screen เมื่อโหลดเสร็จ
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.display = 'none';
+                log("System Ready. Please enter name and select Part.");
+            }, 1000);
+
+            // ผูกปุ่มกด (Event Listeners)
+            document.getElementById('btnP1').addEventListener('click', () => startExam('part1'));
+            document.getElementById('btnP2').addEventListener('click', () => startExam('part2'));
+            document.getElementById('btnP3').addEventListener('click', () => startExam('part3'));
             
-            els.recBtn.addEventListener('click', startRecording);
-            els.stopBtn.addEventListener('click', stopRecording);
-            els.sendBtn.addEventListener('click', uploadAnswer);
-            document.getElementById('btnNext').addEventListener('click', () => nav(1));
-            document.getElementById('btnPrev').addEventListener('click', () => nav(-1));
-            
-            // Load Saved Name
-            if(localStorage.getItem('voice_user_name')) els.name.value = localStorage.getItem('voice_user_name');
+            document.getElementById('btnRec').addEventListener('click', startRec);
+            document.getElementById('btnStop').addEventListener('click', stopRec);
         });
 
-        // --- Logic Functions ---
-        
-        function getSelectedGroup() {
-            const radios = document.getElementsByName('tsrGroup');
-            for (let r of radios) { if (r.checked) return r.value; }
-            return "0"; // Default
-        }
+        function startExam(part) {
+            log(`Button Clicked: ${part}`);
+            
+            const name = document.getElementById('uName').value;
+            // *BYPASS: ไม่บังคับกรอกชื่อ เพื่อเทสว่าปุ่มทำงานไหม*
+            if(!name) log("⚠️ Warning: No name entered (Test mode)");
 
-        function loadPart(partName) {
-            const name = els.name.value.trim();
-            if (!name) {
-                alert('กรุณากรอกชื่อ-นามสกุลก่อนเริ่มครับ');
-                return;
-            }
-            localStorage.setItem('voice_user_name', name);
-            
-            currentPart = partName;
-            
-            // Fallback Data Logic
-            if (!questionsDB[partName] || questionsDB[partName].length === 0) {
-                 // ถ้า Data ไม่ครบ ให้ใช้ Data สำรองของ Part 1 มาแสดงแทนกันหน้าจอขาว
-                 currentList = questionsDB.part1;
-            } else {
-                 currentList = questionsDB[partName];
-            }
-            
-            curIndex = 0;
-            
-            // Update UI
-            document.querySelectorAll('.part-button').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn' + partName.charAt(0).toUpperCase() + partName.slice(1)).classList.add('active');
-            
-            els.examArea.style.display = 'block';
-            // Scroll to exam area
-            els.examArea.scrollIntoView({ behavior: 'smooth' });
-            
-            showQuestion();
-        }
-
-        function showQuestion() {
-            const q = currentList[curIndex];
-            els.qTitle.textContent = `ข้อที่ ${curIndex + 1}`;
-            els.qText.textContent = q.q;
-            els.aText.textContent = q.a;
-            els.progress.textContent = `${curIndex + 1} / ${currentList.length}`;
-            
-            // Reset Recording UI
-            resetAudioUI();
-        }
-
-        function nav(dir) {
-            const newIndex = curIndex + dir;
-            if (newIndex >= 0 && newIndex < currentList.length) {
-                // Warning if recording not sent
-                if (recordedBlob && !confirm("คุณบันทึกเสียงแล้วแต่ยังไม่ได้กดส่ง ต้องการเปลี่ยนข้อโดยไม่ส่งหรือไม่?")) return;
+            try {
+                // ซ่อนหน้าแรก โชว์หน้าสอบ
+                document.getElementById('setupPage').style.display = 'none';
+                document.getElementById('examPage').style.display = 'block';
                 
-                curIndex = newIndex;
-                showQuestion();
+                // โหลดคำถาม
+                const data = DB[part][0];
+                document.getElementById('qHeader').innerText = `แบบทดสอบ ${part.toUpperCase()}`;
+                document.getElementById('qText').innerText = data.q;
+                
+                log(`Exam started: ${part}`);
+            } catch (e) {
+                log(`❌ Start Failed: ${e.message}`);
             }
         }
 
-        function resetAudioUI() {
-            recordedBlob = null;
-            els.playerBox.style.display = 'none';
-            els.player.src = '';
-            els.statusText.textContent = "สถานะ: พร้อมบันทึก";
-            els.statusText.style.color = "#007bff";
-            els.recBtn.disabled = false;
-            els.stopBtn.disabled = true;
-        }
-
-        // --- Recording Logic (iOS Fixed) ---
-        async function startRecording() {
+        async function startRec() {
+            log("Attempting to record...");
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // iOS Trick: No options passed to MediaRecorder
+                log("Microphone Access Granted.");
+
+                // iOS Fix: No options
                 mediaRecorder = new MediaRecorder(stream);
-                
                 audioChunks = [];
-                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
                 mediaRecorder.onstop = () => {
-                    // Force mp4 type for iOS compatibility
-                    recordedBlob = new Blob(audioChunks, { type: 'audio/mp4' });
-                    const url = URL.createObjectURL(recordedBlob);
-                    els.player.src = url;
-                    els.playerBox.style.display = 'block';
-                    els.statusText.textContent = "บันทึกแล้ว (กรุณากดฟัง หรือ กดส่ง)";
-                    els.statusText.style.color = "#28a745";
-                    
-                    els.recBtn.disabled = false;
-                    els.recBtn.textContent = "🎙️ อัดใหม่";
+                    log("Recording stopped. Creating Blob...");
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = document.getElementById('audioPlayer');
+                    audio.src = audioUrl;
+                    document.getElementById('audioBox').style.display = 'block';
+                    log("Audio Blob created (audio/mp4)");
                 };
 
                 mediaRecorder.start();
-                els.statusText.textContent = "กำลังบันทึกเสียง...";
-                els.statusText.style.color = "#dc3545";
-                els.recBtn.disabled = true;
-                els.stopBtn.disabled = false;
+                log("MediaRecorder Started.");
+                
+                document.getElementById('btnRec').disabled = true;
+                document.getElementById('btnStop').disabled = false;
+                document.getElementById('btnStop').style.background = '#dc3545'; // Red color active
 
             } catch (err) {
-                alert("ไม่สามารถเข้าถึงไมโครโฟนได้ (iOS ต้องเปิดใน Safari และเป็น HTTPS เท่านั้น)");
-                console.error(err);
+                log(`❌ Mic Error: ${err.name} - ${err.message}`);
+                alert("ไมโครโฟนใช้งานไม่ได้: " + err.message + "\n(บน iPhone ต้องใช้ Safari และเปิดผ่าน HTTPS เท่านั้น)");
             }
         }
 
-        function stopRecording() {
+        function stopRec() {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
-                els.stopBtn.disabled = true;
+                log("Stopping recorder...");
+                document.getElementById('btnRec').disabled = false;
+                document.getElementById('btnStop').disabled = true;
             }
         }
-
-        async function uploadAnswer() {
-            if (!recordedBlob) return alert("กรุณาอัดเสียงก่อนส่งครับ");
-            
-            els.sendBtn.disabled = true;
-            els.sendBtn.textContent = "กำลังส่ง...";
-            
-            try {
-                const q = currentList[curIndex];
-                const tsrGroup = getSelectedGroup();
-                const safeName = els.name.value.trim().replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `${safeName}_${currentPart}_Q${curIndex+1}_${Date.now()}.mp4`;
-                
-                // Upload File
-                const { error: uploadErr } = await supabase.storage
-                    .from('responses')
-                    .upload(`${currentPart}/${fileName}`, recordedBlob, { contentType: 'audio/mp4' });
-                
-                if (uploadErr) throw uploadErr;
-                
-                // Get URL
-                const { data } = supabase.storage.from('responses').getPublicUrl(`${currentPart}/${fileName}`);
-                
-                // Insert DB
-                await supabase.from('voice_answers').insert([{
-                    user_id: userId,
-                    exam_id: els.name.value,
-                    part: currentPart,
-                    question_number: curIndex + 1,
-                    audio_url: data.publicUrl,
-                    tsr_group_id: parseInt(tsrGroup)
-                }]);
-                
-                alert("ส่งคำตอบเรียบร้อย!");
-                
-                // Auto Next
-                if (curIndex < currentList.length - 1) {
-                    nav(1);
-                } else {
-                    alert("ยินดีด้วย! คุณทำครบทุกข้อใน Part นี้แล้ว");
-                }
-
-            } catch (err) {
-                alert("เกิดข้อผิดพลาดในการส่ง: " + err.message);
-            } finally {
-                els.sendBtn.disabled = false;
-                els.sendBtn.textContent = "📤 ยืนยันส่งคำตอบข้อนี้";
-            }
-        }
-
     </script>
 </body>
 </html>
