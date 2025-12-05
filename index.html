@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD) - iOS/Android Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Global Styles --- */
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; color: #333; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
+        h1 { color: #007bff; font-weight: 700; }
+        h2 { color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; }
+        
+        /* Input & Selection */
+        .user-info, .part-selection { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        #inputUserName { padding: 10px; max-width: 300px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; width: 100%; }
+        .part-selection { border-top: none; padding-top: 0; }
+
+        /* Radio Groups */
+        .group-radio-option { display: inline-block; cursor: pointer; padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; transition: all 0.2s; font-size: 0.9em; margin: 5px; }
+        .group-radio-input:checked + .group-radio-option { background-color: #007bff; color: white; border-color: #007bff; font-weight: 700; }
+        .group-radio-input { display: none; }
+
+        /* Buttons */
+        .part-buttons { display: flex; gap: 15px; flex-wrap: wrap; }
+        .part-button { flex: 1; min-width: 120px; padding: 12px 25px; font-size: 16px; cursor: pointer; border: 1px solid #007bff; border-radius: 6px; background-color: #fff; color: #007bff; transition: background-color 0.3s, color 0.3s; }
+        .part-button:hover, .part-button.active { background-color: #007bff; color: #fff; box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3); }
+
+        /* Exam Area */
+        #examArea { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media (max-width: 768px) { #examArea { grid-template-columns: 1fr; } .container { margin: 10px; padding: 15px; } }
+        
+        .question-panel { padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9; }
+        .question-content, .required-answer { padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 1.1em; }
+        .question-content { background-color: #e0f7fa; border-left: 5px solid #00bcd4; }
+        .required-answer { background-color: #ffeccf; border-left: 5px solid #ff9800; }
+        
+        .recording-controls { margin-top: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        #recordingStatus { font-weight: 700; margin-top: 20px; font-size: 1.1em; color: #007bff; }
+        
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 700; transition: transform 0.2s; font-size: 1em; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-success { background-color: #28a745; }
+        .btn-primary { background-color: #007bff; margin-top: 20px; width: 100%; } 
+
+        #playbackControls { margin-top: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; padding: 10px; border-top: 1px solid #eee; }
+        #playbackAudio { flex-grow: 1; min-width: 200px; }
+
+        .question-list-panel { padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); max-height: 600px; overflow-y: auto; }
+        .question-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .question-item:hover, .question-item.active { background-color: #e9f7ff; font-weight: 700; border-left: 3px solid #007bff; }
+        
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; font-weight: 700; }
+        .alert.info { background-color: #e7f7ff; color: #0056b3; border: 1px solid #b8daff; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; font-size: 1.8em; color: #007bff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD)</h1>
+            <p>ระบบรองรับ iOS และ Android - กรุณาทำแบบทดสอบให้ครบ 90 ข้อ</p>
+        </header>
+
+        <div id="mainAlert" class="alert info"></div>
+
+        <div class="user-info">
+            <h2>1. ข้อมูลผู้เข้าสอบ</h2>
+            <label for="inputUserName">ชื่อ-นามสกุล/รหัสพนักงาน:</label>
+            <input type="text" id="inputUserName" onchange="saveUserName()" placeholder="กรุณากรอกชื่อ-นามสกุล/รหัสพนักงาน" required>
+            
+            <div style="margin-top: 20px;">
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">เลือกกลุ่มพนักงาน (TSR Group):</label>
+                <div id="tsrGroupSelection" style="text-align: center;"></div>
+            </div>
+        </div>
+
+        <div class="part-selection">
+            <h2>2. เลือก Part ที่ต้องการทำแบบทดสอบ</h2>
+            <div class="part-buttons">
+                <button id="btnPart1" class="part-button" onclick="loadPart('part1')">Part 1 (30 ข้อ)</button>
+                <button id="btnPart2" class="part-button" onclick="loadPart('part2')">Part 2 (30 ข้อ)</button>
+                <button id="btnPart3" class="part-button" onclick="loadPart('part3')">Part 3 (30 ข้อ)</button>
+            </div>
+        </div>
+
+        <div id="examArea" style="display: none;">
+            <div class="question-panel">
+                <h2 id="currentQuestionTitle">Part 1: คำถามข้อที่ 1</h2>
+                
+                <div class="question-content">
+                    <p><strong>คำถาม:</strong> <span id="questionPrompt">...</span></p>
+                </div>
+
+                <div class="required-answer">
+                    <p><strong>แนวทางคำตอบที่ต้องการ:</strong> <span id="requiredAnswer">...</span></p>
+                </div>
+
+                <p id="recordingStatus" style="font-weight: 700; margin-top: 20px;">สถานะ: ยังไม่ได้เริ่มบันทึกเสียง</p>
+
+                <div class="recording-controls">
+                    <button id="startRecBtn" class="btn btn-success" onclick="handleStartRecording()">เริ่มบันทึกเสียง</button>
+                    <button id="stopRecBtn" class="btn btn-danger" onclick="handleStopRecording()" disabled>หยุดบันทึก</button>
+                </div>
+
+                <div id="playbackControls">
+                    <audio id="playbackAudio" controls style="display: none;" playsinline></audio>
+                    <button id="sendQuestionBtn" onclick="handleSingleSubmission()" class="btn btn-success" style="display: none;" disabled>
+                        ส่งคำตอบข้อนี้ (บันทึกและส่ง)
+                    </button>
+                </div>
+
+                <button id="submitBtn" onclick="submitExam()" class="btn btn-primary" disabled>
+                    ส่งงาน Part (ส่งแล้ว 0/30 ข้อ)
+                </button>
+            </div>
+
+            <div class="question-list-panel">
+                <h3>รายการคำถาม</h3>
+                <div id="questionList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loadingOverlay">
+        <p>กำลังดำเนินการส่งข้อมูล... กรุณารอสักครู่</p>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
+
+        // --- Configuration ---
+        const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // --- State Variables ---
+        let audioBlobs = { part1: {}, part2: {}, part3: {} }; 
+        let mediaRecorder;
+        let audioChunks = [];
+        let currentPart = 'part1'; 
+        let shuffledQuestions = []; 
+        let currentIndex = 0;
+        let currentBlobUrl = null; 
+        
+        // ** NEW: Store Recording MIME Type for Cross-Platform Support **
+        let recordedMimeType = 'audio/webm'; // Default fallback
+        let recordedExtension = 'webm';
+
+        // --- User & Group Data ---
+        const tsrGroups = [
+            { id: 0, name_th: "Trainer Group (ฝึกซ้อม)", name_en: "Trainer Group", description: "ใช้สำหรับการฝึกซ้อมของเทรนเนอร์หรือผู้ประเมิน" },
+            { id: 1, name_th: "พนักงานกลุ่มเนอสเซอรี่", name_en: "Nursery Group", description: "พนักงานใหม่ที่อยู่ระหว่างการฝึกอบรมเบื้องต้น" },
+            { id: 2, name_th: "New TSRs On boarding Group", name_en: "New TSRs Onboarding", description: "พนักงานใหม่ที่อยู่ระหว่างการเริ่มงานและฝึกปฏิบัติ" },
+            { id: 3, name_th: "New TSRs", name_en: "New TSRs", description: "พนักงานใหม่ที่ผ่านช่วง Onboarding แล้ว" },
+            { id: 4, name_th: "Existing TSRs", name_en: "Existing TSRs", description: "พนักงานที่มีประสบการณ์แล้ว" }
+        ];
+        let selectedTsrGroup = null; 
+        let currentUserId = null; 
+        const USER_ID_KEY = 'voice_hd_user_id';
+
+        // --- DOM Elements ---
+        const inputUserName = document.getElementById('inputUserName');
+        const mainAlert = document.getElementById('mainAlert');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const startRecBtn = document.getElementById('startRecBtn');
+        const stopRecBtn = document.getElementById('stopRecBtn');
+        const playbackAudio = document.getElementById('playbackAudio');
+        const questionList = document.getElementById('questionList');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const submitBtn = document.getElementById('submitBtn'); 
+        const questionPrompt = document.getElementById('questionPrompt');
+        const requiredAnswer = document.getElementById('requiredAnswer');
+        const sendQuestionBtn = document.getElementById('sendQuestionBtn'); 
+
+        // --- Questions Data (ย่อไว้เพื่อความกระชับ - ใช้ข้อมูลเดิมได้เลย) ---
+        // (*** ใส่ Data เดิมของคุณตรงนี้ หรือใช้ของเก่าได้เลย โค้ดนี้เน้นแก้ Logic ***)
+        // เพื่อให้โค้ดทำงานได้ ผมจะใส่ตัวแปร questions ไว้ แต่ให้คุณใช้ Data เดิมของคุณนะ
+        const questions = {
+             part1: [
+                { id: "P1Q1", part: 1, q: "ไม่สนใจครับ/ค่ะ ต้องขอโทษด้วย ขอวางสายเลยนะครับ/คะ", a: "เข้าใจเลยค่ะ/ครับ ว่าอาจจะยังไม่สนใจในตอนนี้ แต่ที่โทรมาหาคุณลูกค้าวันนี้เป็นโครงการพิเศษที่ **ไม่ได้เป็นการขายตรง** ค่ะ/ครับ เป็นเพียงการ **มอบสิทธิประโยชน์** ที่ใช้เวลาอธิบายแค่ 1 นาทีเท่านั้น ถ้าไม่ตรงใจ คุณลูกค้าสามารถวางสายได้เลยค่ะ/ครับ" },
+                // ... (ใส่ข้อมูลคำถามทั้งหมด 90 ข้อของคุณตรงนี้) ...
+                 // เพื่อให้ทดสอบได้ ผมใส่แค่ 1 ข้อ ถ้าคุณเอาไปใช้จริง ให้เอา list คำถามเดิมมาใส่แทนตรงนี้นะครับ
+             ],
+             part2: [], part3: []
+        };
+        // ** หมายเหตุ: ในการใช้งานจริง ให้ Copy object 'questions' ทั้งหมดจากไฟล์เดิมมาใส่แทนตรงนี้นะครับ **
+
+        // --- Helper Functions ---
+        function showAlert(message, type = 'info') { 
+            mainAlert.innerHTML = message;
+            mainAlert.className = `alert ${type}`;
+            mainAlert.style.display = 'block';
+            setTimeout(() => { mainAlert.style.display = 'none'; }, 5000);
+        }
+
+        window.saveUserName = function() {
+            localStorage.setItem('examUserName', inputUserName.value.trim());
+            checkSubmitButtonStatus();
+        }
+
+        function initializeUser() {
+            let userId = localStorage.getItem(USER_ID_KEY);
+            if (!userId) {
+                userId = uuidv4(); 
+                localStorage.setItem(USER_ID_KEY, userId);
+            }
+            currentUserId = userId;
+        }
+        
+        function renderTsrGroupRadios() {
+            const groupDiv = document.getElementById('tsrGroupSelection');
+            if (!groupDiv) return;
+            groupDiv.innerHTML = ''; 
+            tsrGroups.forEach((group, index) => {
+                const isChecked = (index === 0);
+                const input = document.createElement('input');
+                input.type = 'radio'; input.id = `tsrGroup${group.id}`; input.className = 'group-radio-input';
+                input.name = 'tsrGroup'; input.value = group.id; input.checked = isChecked;
+                const label = document.createElement('label');
+                label.htmlFor = `tsrGroup${group.id}`; label.className = 'group-radio-option'; 
+                label.textContent = group.name_th;
+                groupDiv.appendChild(input); groupDiv.appendChild(label);
+                if (isChecked) selectedTsrGroup = group;
+            });
+            groupDiv.addEventListener('change', (event) => {
+                const selectedId = parseInt(event.target.value);
+                selectedTsrGroup = tsrGroups.find(g => g.id === selectedId);
+            });
+        }
+
+        async function logSessionStart(userName) {
+            if (!supabase || !selectedTsrGroup) return false;
+            try {
+                const { error } = await supabase.from('voice_answers').insert([{
+                    user_id: currentUserId, exam_id: userName, part: 'SETUP', question_number: 0,
+                    tsr_group_id: selectedTsrGroup.id, tsr_group_name: selectedTsrGroup.name_th,
+                }]);
+                return !error;
+            } catch (err) { console.error("Log Error:", err); return false; }
+        }
+
+        // --- Cross-Platform Audio Helpers ---
+        function getSupportedMimeType() {
+            const types = [
+                'audio/mp4', // iOS Preferred
+                'audio/webm;codecs=opus', 
+                'audio/webm', // Android/Chrome Preferred
+                'audio/ogg;codecs=opus',
+                'audio/wav'
+            ];
+            for (const type of types) {
+                if (MediaRecorder.isTypeSupported(type)) return type;
+            }
+            return ''; // Let browser decide
+        }
+
+        function getFileExtension(mimeType) {
+            if (mimeType.includes('mp4') || mimeType.includes('aac')) return 'mp4';
+            if (mimeType.includes('wav')) return 'wav';
+            if (mimeType.includes('ogg')) return 'ogg';
+            return 'webm'; // Default
+        }
+
+        // --- Supabase Core Functions ---
+        async function uploadAudioToSupabase(fileBlob, questionId, partKey, userName) { 
+            const partNum = partKey.replace('part', 'P');
+            const safeUserName = userName.replace(/[^a-zA-Z0-9ก-ฮเ-์]/g, '_');
+            
+            // ** FIX: Use correct extension based on recorded type **
+            const fileName = `${safeUserName}_${partNum}_${questionId}_${Date.now()}.${recordedExtension}`;
+            const filePath = `${partKey}/${questionId}/${fileName}`; 
+            
+            // ** IMPORTANT: Explicitly set content type **
+            const audioFile = new File([fileBlob], fileName, { type: recordedMimeType });
+
+            const { error } = await supabase.storage.from('responses').upload(filePath, audioFile, {
+                cacheControl: '3600', upsert: false, contentType: recordedMimeType
+            });
+
+            if (error) throw new Error(`Upload failed: ${error.message}`);
+            
+            const { data: { publicUrl } } = supabase.storage.from('responses').getPublicUrl(filePath);
+            return publicUrl;
+        }
+
+        async function submitSingleResponse(blob, question, userName, partKey) { 
+            const publicUrl = await uploadAudioToSupabase(blob, question.id, partKey, userName);
+            const questionNumber = parseInt(question.id.replace(/[a-zA-Z]+/, ''));
+            
+            const { error: insertError } = await supabase.from('voice_answers').insert([{
+                user_id: currentUserId, exam_id: userName, part: partKey, question_number: questionNumber, 
+                audio_url: publicUrl, tsr_group_id: selectedTsrGroup.id, tsr_group_name: selectedTsrGroup.name_th
+            }]);
+
+            if (insertError) throw new Error(`Database failed: ${insertError.message}`);
+            return questionNumber;
+        }
+
+        // --- UI Functions ---
+        function renderQuestionList() {
+            questionList.innerHTML = '';
+            shuffledQuestions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                item.id = `q-item-${index}`;
+                item.setAttribute('onclick', `displayQuestionFromList(${index})`); 
+                const status = audioBlobs[currentPart][q.id];
+                let statusIcon = '•', color = 'red';
+                if (status) {
+                    if (status.submitted) { statusIcon = '✓'; color = 'green'; } 
+                    else { statusIcon = '•'; color = 'orange'; }
+                }
+                item.innerHTML = `ข้อที่ ${index + 1} <span class="status-icon" style="color: ${color};">${statusIcon}</span>`;
+                if (index === currentIndex) item.classList.add('active');
+                questionList.appendChild(item);
+            });
+            checkSubmitButtonStatus(); 
+        }
+
+        function updateQuestionUI(question) {
+            document.getElementById('currentQuestionTitle').textContent = `Part ${question.part}: คำถามข้อที่ ${currentIndex + 1}`;
+            questionPrompt.textContent = question.q; 
+            requiredAnswer.innerHTML = question.a;
+            
+            const status = audioBlobs[currentPart][question.id];
+            playbackAudio.src = ''; playbackAudio.style.display = 'none';
+            sendQuestionBtn.style.display = 'none'; sendQuestionBtn.disabled = true;
+
+            if (status && status.blob) {
+                currentBlobUrl = URL.createObjectURL(status.blob);
+                playbackAudio.src = currentBlobUrl; 
+                playbackAudio.style.display = 'block';
+                
+                if (status.submitted) {
+                    recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว (บันทึกใหม่ได้)';
+                    sendQuestionBtn.textContent = 'บันทึกใหม่และส่งซ้ำ';
+                } else {
+                    recordingStatus.textContent = 'สถานะ: บันทึกแล้ว! กรุณากดส่ง';
+                    sendQuestionBtn.textContent = 'ส่งคำตอบข้อนี้';
+                }
+                sendQuestionBtn.style.display = 'block'; sendQuestionBtn.disabled = false;
+            } else {
+                recordingStatus.textContent = 'สถานะ: ยังไม่ได้เริ่มบันทึกเสียง';
+            }
+            startRecBtn.disabled = false; stopRecBtn.disabled = true;
+            renderQuestionList();
+        }
+
+        function displayQuestion(index) {
+            currentIndex = index;
+            if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
+            updateQuestionUI(shuffledQuestions[index]);
+        }
+        window.displayQuestionFromList = function(index) {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                if (!confirm('กรุณาหยุดบันทึกเสียงก่อนเปลี่ยนข้อ')) return;
+                mediaRecorder.stop(); 
+            }
+            displayQuestion(index);
+        };
+
+        window.loadPart = async function(partKey) { 
+            const userName = inputUserName.value.trim();
+            if (!userName) return showAlert('กรุณากรอกชื่อก่อนเริ่ม', 'warning');
+            if (!selectedTsrGroup) return showAlert('กรุณาเลือกกลุ่ม TSR', 'warning');
+
+            window.saveUserName(); 
+            loadingOverlay.style.display = 'flex';
+            await logSessionStart(userName);
+            loadingOverlay.style.display = 'none';
+            showAlert(`เริ่ม Part ${partKey} (กลุ่ม: ${selectedTsrGroup.name_th})`, 'success');
+
+            currentPart = partKey;
+            // ** NOTE: ตรงนี้ในโค้ดจริงต้องดึงจากตัวแปร questions ของคุณ **
+            // เนื่องจากผมไม่ได้ Copy Data 90 ข้อมาหมด ให้คุณเช็คว่าตัวแปร questions มีข้อมูลนะครับ
+            if(!questions[currentPart]) { showAlert("ไม่พบข้อมูลคำถาม (โปรดตรวจสอบ Data)", "error"); return; }
+            
+            shuffledQuestions = questions[currentPart]; 
+            document.getElementById('examArea').style.display = 'grid';
+            document.querySelectorAll('.part-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn${partKey.charAt(0).toUpperCase() + partKey.slice(1)}`).classList.add('active');
+            displayQuestion(0); 
+        };
+
+        window.handleSingleSubmission = async function() { 
+            const question = shuffledQuestions[currentIndex];
+            const status = audioBlobs[currentPart][question.id];
+            if (!status || !status.blob) return showAlert('ไม่พบไฟล์เสียง', 'warning');
+
+            loadingOverlay.style.display = 'flex';
+            try {
+                const qNum = await submitSingleResponse(status.blob, question, inputUserName.value.trim(), currentPart);
+                loadingOverlay.style.display = 'none';
+                audioBlobs[currentPart][question.id].submitted = true; 
+                showAlert(`ส่งข้อที่ ${qNum} สำเร็จ!`, 'success');
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                showAlert(`ส่งล้มเหลว: ${error.message}`, 'warning');
+            } finally { updateQuestionUI(question); }
+        };
+
+        // --- Recording Functions (FIXED for iOS) ---
+        window.handleStartRecording = async function() {
+            if (!inputUserName.value.trim() || !selectedTsrGroup) return showAlert('กรุณากรอกข้อมูลให้ครบ', 'warning');
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // ** CRITICAL FIX FOR IOS **
+                const mimeType = getSupportedMimeType();
+                const options = mimeType ? { mimeType } : {};
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                // Store actual MIME type used for blob creation later
+                recordedMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+                recordedExtension = getFileExtension(recordedMimeType);
+                
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+                
+                mediaRecorder.onstart = () => {
+                    recordingStatus.textContent = `สถานะ: กำลังบันทึก (${recordedExtension.toUpperCase()})...`;
+                    startRecBtn.disabled = true; stopRecBtn.disabled = false;
+                    playbackAudio.style.display = 'none';
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Create Blob with correct type
+                    const audioBlob = new Blob(audioChunks, { type: recordedMimeType });
+                    audioChunks = [];
+                    
+                    const qId = shuffledQuestions[currentIndex].id;
+                    audioBlobs[currentPart][qId] = { blob: audioBlob, submitted: false }; 
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    updateQuestionUI(shuffledQuestions[currentIndex]); 
+                    showAlert('บันทึกเสร็จสิ้น', 'info');
+                };
+
+                mediaRecorder.start();
+            } catch (err) {
+                console.error("Mic Error:", err);
+                showAlert('ไม่สามารถเข้าถึงไมโครโฟนได้ (iOS ต้องใช้ HTTPS และ Safari)', 'warning');
+            }
+        };
+
+        window.handleStopRecording = () => { if (mediaRecorder?.state === 'recording') mediaRecorder.stop(); };
+
+        function checkSubmitButtonStatus() {
+            if (!shuffledQuestions.length) return submitBtn.disabled = true;
+            const submittedCount = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
+            submitBtn.textContent = `ส่งงาน Part ${currentPart.replace('part', '')} (${submittedCount}/${shuffledQuestions.length})`;
+            submitBtn.disabled = submittedCount === 0;
+        }
+        
+        window.submitExam = function() {
+            const count = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
+            const total = shuffledQuestions.length;
+            if (count === total) {
+                showAlert('ส่งครบทุกข้อแล้ว!', 'success');
+                document.getElementById('examArea').style.display = 'none';
+            } else {
+                showAlert(`ส่งแล้ว ${count}/${total} ข้อ กรุณาส่งให้ครบ`, 'warning');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUser();
+            inputUserName.value = localStorage.getItem('examUserName') || '';
+            renderTsrGroupRadios();
+            checkSubmitButtonStatus(); 
+            
+            // Check Data Integrity
+            if (!questions.part1 || questions.part1.length === 0) {
+                 console.warn("WARNING: Question Data is empty. Please ensure you pasted the full question list.");
+            }
+        });
+    </script>
+</body>
+</html>
