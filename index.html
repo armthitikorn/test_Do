@@ -2,274 +2,105 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice HD (Universal Final)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Check</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
-        .container { max-width: 800px; margin: 15px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        /* หัวข้อสีเหลือง: สังเกตง่ายว่าโค้ดอัปเดตหรือยัง */
-        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding: 15px; background-color: #fff3cd; border-radius: 8px; border: 1px solid #ffeeba; color: #856404; }
-        
-        .btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 8px; border: none; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-part { background: #fff; border: 2px solid #007bff; color: #007bff; }
-        /* เอฟเฟกต์ตอนกดปุ่มบนมือถือ */
-        .btn-part:active { background: #007bff; color: white; transform: scale(0.98); }
-        
-        #examArea { display: none; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ccc; }
-        .status-box { padding: 10px; text-align: center; font-weight: bold; margin-bottom: 10px; border-radius: 5px; }
-        .input-box { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
-
-        /* ปุ่มเลือกกลุ่ม */
-        .group-selector { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        .group-btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 20px; background: #f8f9fa; cursor: pointer; user-select: none; }
-        .group-btn.selected { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 2px 5px rgba(0,123,255,0.3); }
-        
-        #debugMsg { font-size: 0.8em; color: gray; text-align: center; margin-top: 20px; }
+        body { font-family: sans-serif; padding: 20px; background: #333; color: white; }
+        .box { background: #444; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #555; }
+        h3 { margin-top: 0; color: #ffd700; border-bottom: 1px solid #666; padding-bottom: 5px; }
+        .status { font-weight: bold; margin-left: 10px; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .wait { color: #aaa; }
+        button { padding: 10px 20px; font-size: 16px; width: 100%; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <h2 style="margin:0;">⚠️ เวอร์ชันใช้งานจริง (iOS Fixed)</h2>
-            <p style="margin:5px 0 0 0; font-size:0.9em;">(ถ้ากดปุ่มแล้วหน้าจอเปลี่ยน แสดงว่าผ่านครับ)</p>
-        </header>
+    <h2>🛠️ หน้าจอตรวจสอบระบบ</h2>
+    <p>กรุณาแคปหน้านี้ส่งมาให้ดูครับ</p>
 
-        <div id="setupPart">
-            <label><strong>1. ชื่อ-นามสกุล:</strong></label>
-            <input type="text" id="username" class="input-box" placeholder="พิมพ์ชื่อที่นี่...">
+    <div class="box">
+        <h3>1. ตรวจสอบ JavaScript</h3>
+        - JS Running: <span id="s1" class="wait">...</span>
+    </div>
 
-            <label><strong>2. เลือกกลุ่ม:</strong></label>
-            <div class="group-selector" id="groupContainer">
-                <div class="group-btn selected" onclick="selectGroup(0, this)">Trainer (ฝึกซ้อม)</div>
-                <div class="group-btn" onclick="selectGroup(1, this)">Nursery</div>
-                <div class="group-btn" onclick="selectGroup(2, this)">New Onboarding</div>
-                <div class="group-btn" onclick="selectGroup(3, this)">New TSRs</div>
-                <div class="group-btn" onclick="selectGroup(4, this)">Existing TSRs</div>
-            </div>
+    <div class="box">
+        <h3>2. ตรวจสอบ Supabase (ฐานข้อมูล)</h3>
+        - Library Loaded: <span id="s2" class="wait">...</span><br>
+        - Connection: <span id="s2b" class="wait">...</span>
+    </div>
 
-            <label><strong>3. เลือก Part:</strong></label>
-            <button class="btn btn-part" onclick="clickPart('part1')">เข้าทำแบบทดสอบ Part 1</button>
-            <button class="btn btn-part" onclick="clickPart('part2')">เข้าทำแบบทดสอบ Part 2</button>
-            <button class="btn btn-part" onclick="clickPart('part3')">เข้าทำแบบทดสอบ Part 3</button>
-        </div>
+    <div class="box">
+        <h3>3. ตรวจสอบการอัดเสียง (สำคัญ)</h3>
+        - Browser: <span id="s3a">...</span><br>
+        - MediaRecorder: <span id="s3b" class="wait">...</span><br>
+        <button onclick="testMic()">กดปุ่มนี้เพื่อทดสอบไมค์</button>
+        <div id="micResult" style="margin-top:5px; color:#aaa;">(รอผลการกดปุ่ม)</div>
+    </div>
 
-        <div id="examArea">
-            <div class="status-box" id="statusBox" style="background:#e2e3e5;">สถานะ: พร้อมบันทึก</div>
-            
-            <h3 id="qTitle" style="color:#007bff;">คำถาม...</h3>
-            <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 5px solid #2196f3;">
-                <strong>ลูกค้าถาม:</strong> <br> <span id="qText">...</span>
-            </div>
-            <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 5px solid #ffc107;">
-                <strong>แนวทางตอบ:</strong> <br> <span id="aText">...</span>
-            </div>
-
-            <button class="btn" style="background:#28a745; color:white;" id="btnRec" onclick="startRec()">🎙️ กดเพื่อเริ่มพูด (อัดเสียง)</button>
-            <button class="btn" style="background:#dc3545; color:white;" id="btnStop" onclick="stopRec()" disabled>⏹️ หยุดบันทึก</button>
-            
-            <audio id="audioPlayer" controls style="width:100%; margin-top:10px; display:none;" playsinline></audio>
-            
-            <button class="btn" style="background:#17a2b8; color:white; margin-top:10px; display:none;" id="btnSend" onclick="uploadAnswer()">📤 ส่งคำตอบข้อนี้</button>
-            
-            <div style="margin-top:20px; display:flex; gap:10px;">
-                <button class="btn btn-part" onclick="changeQuestion(-1)" style="font-size:0.9em;">&lt; ข้อก่อนหน้า</button>
-                <button class="btn btn-part" onclick="changeQuestion(1)" style="font-size:0.9em;">ข้อถัดไป &gt;</button>
-            </div>
-        </div>
-
-        <div id="debugMsg">System Status: Waiting...</div>
+    <div class="box">
+        <h3>Console Log (ข้อความจากระบบ)</h3>
+        <div id="logs" style="font-size:12px; font-family:monospace; color:#ccc;"></div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://wzwyotzzxycqfwercakh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno';
-        
-        let supabase = null;
+        // ฟังก์ชันเขียน Log
+        function log(msg) {
+            document.getElementById('logs').innerHTML += `> ${msg}<br>`;
+        }
 
-        // --- DATA (90 ข้อ ครบถ้วน) ---
-        const DB = {
-            part1: [
-                { id: "P1Q1", q: "ไม่สนใจครับ/ค่ะ ขอวางสายเลย", a: "เข้าใจเลยค่ะ แต่โครงการนี้ไม่ใช่การขายตรง เป็นสิทธิพิเศษใช้เวลาแค่ 1 นาทีค่ะ" },
-                { id: "P1Q2", q: "มีประกันครบแล้วค่ะ", a: "เยี่ยมเลยค่ะ แต่แผนนี้เน้นค่าห้องสูงสุดที่แผนเดิมอาจยังไม่ครอบคลุมนะคะ" },
-                { id: "P1Q3", q: "ไม่สะดวกตอนนี้", a: "ขออนุญาตให้ข้อมูลสั้นๆ เพื่อรักษาสิทธิ์ไว้ก่อนตัดสินใจภายหลังได้ค่ะ" }
-                // (ถ้าทดสอบผ่าน คุณค่อย Copy อีก 87 ข้อมาใส่นะครับ เพื่อให้โค้ดเบาและรันง่ายก่อน)
-            ],
-            part2: [
-                { id: "P2Q1", q: "โรคประจำตัวคุ้มครองไหม?", a: "เราดูระยะเวลาที่เป็นค่ะ ถ้าเป็นมานานแล้วอาจมีข้อยกเว้น แต่ขอสอบถามประวัติเพื่อเช็คให้ค่ะ" }
-            ],
-            part3: [
-                { id: "P3Q1", q: "ขอคิดดูก่อน", a: "การตัดสินใจวันนี้ช่วยล็อกเบี้ยราคาพิเศษไว้นะคะ" }
-            ]
-        };
+        // 1. เช็ค JS
+        document.getElementById('s1').innerText = "✅ ทำงานปกติ";
+        document.getElementById('s1').className = "pass";
+        log("JS Started");
 
-        // --- VARIABLES ---
-        let currentPart = 'part1';
-        let currentIndex = 0;
-        let selectedGroupId = 0;
-        let mediaRecorder;
-        let audioChunks = [];
-        let currentBlob = null;
-        let currentQuestions = [];
-
-        // --- INITIALIZATION ---
+        // 2. เช็ค Supabase
         window.onload = function() {
-            document.getElementById('debugMsg').innerText = "System Status: Loaded OK";
+            log("Window Loaded");
             
-            // เชื่อมต่อ Supabase
-            if (typeof createClient !== 'undefined') {
-                supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log("Supabase Connected");
-            } else if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log("Supabase Connected (Fallback)");
+            // เช็ค Library
+            if (typeof supabase !== 'undefined' || typeof createClient !== 'undefined') {
+                document.getElementById('s2').innerHTML = "✅ โหลดสำเร็จ";
+                document.getElementById('s2').className = "pass";
             } else {
-                document.getElementById('debugMsg').innerText = "⚠️ Supabase Load Failed (Offline Mode)";
+                document.getElementById('s2').innerHTML = "❌ โหลดไม่ผ่าน (เน็ตอาจบล็อก)";
+                document.getElementById('s2').className = "fail";
+            }
+
+            // เช็ค Browser Info
+            document.getElementById('s3a').innerText = navigator.userAgent.slice(0, 50) + "...";
+
+            // เช็ค MediaRecorder (ตัวอัดเสียง)
+            if (window.MediaRecorder) {
+                document.getElementById('s3b').innerHTML = "✅ รองรับ (Supported)";
+                document.getElementById('s3b').className = "pass";
+            } else {
+                document.getElementById('s3b').innerHTML = "❌ ไม่รองรับ (iOS เก่าไป?)";
+                document.getElementById('s3b').className = "fail";
             }
         };
 
-        // --- FUNCTIONS ---
-        function selectGroup(id, elem) {
-            selectedGroupId = id;
-            document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('selected'));
-            elem.classList.add('selected');
-        }
-
-        function clickPart(partName) {
-            const name = document.getElementById('username').value.trim();
-            if(!name) { alert("⚠️ กรุณากรอกชื่อก่อนครับ"); return; }
-
-            currentPart = partName;
-            currentQuestions = DB[partName] || DB['part1']; // กัน Error
-            currentIndex = 0;
-
-            document.getElementById('setupPart').style.display = 'none';
-            document.getElementById('examArea').style.display = 'block';
+        // ฟังก์ชันเทสไมค์
+        async function testMic() {
+            const res = document.getElementById('micResult');
+            res.innerText = "กำลังขออนุญาตใช้ไมค์...";
+            log("Requesting Mic...");
             
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            const q = currentQuestions[currentIndex];
-            document.getElementById('qTitle').innerText = `ข้อที่ ${currentIndex + 1} (${currentPart})`;
-            document.getElementById('qText').innerText = q.q;
-            document.getElementById('aText').innerText = q.a;
-            
-            // Reset UI
-            document.getElementById('audioPlayer').style.display = 'none';
-            document.getElementById('btnSend').style.display = 'none';
-            document.getElementById('btnRec').disabled = false;
-            document.getElementById('statusBox').innerText = "สถานะ: พร้อมบันทึก";
-            document.getElementById('statusBox').style.background = "#e2e3e5";
-            document.getElementById('statusBox').style.color = "black";
-        }
-
-        function changeQuestion(dir) {
-            const newIndex = currentIndex + dir;
-            if(newIndex >= 0 && newIndex < currentQuestions.length) {
-                currentIndex = newIndex;
-                loadQuestion();
-            }
-        }
-
-        // --- RECORDING (iOS Compatible) ---
-        async function startRec() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // *** สำคัญ: ไม่ใส่ options เพื่อให้ iOS เลือกเอง ***
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = e => {
-                    if (e.data.size > 0) audioChunks.push(e.data);
-                };
-                
-                mediaRecorder.onstop = () => {
-                    // สร้างไฟล์ MP4 (Safari ชอบ MP4/M4A)
-                    currentBlob = new Blob(audioChunks, { type: 'audio/mp4' });
-                    const url = URL.createObjectURL(currentBlob);
-                    
-                    const audio = document.getElementById('audioPlayer');
-                    audio.src = url;
-                    audio.style.display = 'block';
-                    
-                    document.getElementById('statusBox').innerText = "✅ บันทึกเสร็จแล้ว (กดฟัง หรือ กดส่ง)";
-                    document.getElementById('statusBox').style.background = "#d4edda";
-                    document.getElementById('statusBox').style.color = "#155724";
-                    
-                    document.getElementById('btnRec').disabled = false;
-                    document.getElementById('btnStop').disabled = true;
-                    document.getElementById('btnSend').style.display = 'block';
-                };
-
-                mediaRecorder.start();
-                
-                document.getElementById('statusBox').innerText = "🔴 กำลังอัดเสียง...";
-                document.getElementById('statusBox').style.background = "#f8d7da";
-                document.getElementById('statusBox').style.color = "#721c24";
-                
-                document.getElementById('btnRec').disabled = true;
-                document.getElementById('btnStop').disabled = false;
-
+                res.innerHTML = "✅ ไมค์ใช้งานได้!";
+                res.style.color = "#0f0";
+                log("Mic Access Granted");
             } catch (err) {
-                alert("❌ ไมค์ใช้งานไม่ได้: " + err.message + "\n(ต้องเปิดใน Safari และใช้ HTTPS เท่านั้น)");
-            }
-        }
-
-        function stopRec() {
-            if(mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-        }
-
-        // --- UPLOAD TO SUPABASE ---
-        async function uploadAnswer() {
-            if(!supabase) { alert("ระบบฐานข้อมูลไม่พร้อม (กรุณารีเฟรช)"); return; }
-            
-            document.getElementById('btnSend').innerText = "กำลังส่ง...";
-            document.getElementById('btnSend').disabled = true;
-
-            try {
-                const name = document.getElementById('username').value.replace(/[^a-zA-Z0-9]/g, '_');
-                const fileName = `${name}_${currentPart}_Q${currentIndex+1}_${Date.now()}.mp4`;
-                const filePath = `${currentPart}/${fileName}`;
+                res.innerHTML = "❌ ไมค์พัง/ไม่อนุญาต: " + err.message;
+                res.style.color = "#f00";
+                log("Mic Error: " + err.message);
                 
-                // Upload
-                const { error: uploadErr } = await supabase.storage
-                    .from('responses')
-                    .upload(filePath, currentBlob, { contentType: 'audio/mp4' });
-
-                if(uploadErr) throw uploadErr;
-
-                // Get URL
-                const { data } = supabase.storage.from('responses').getPublicUrl(filePath);
-
-                // Save to DB
-                const { error: dbErr } = await supabase.from('voice_answers').insert([{
-                    exam_id: document.getElementById('username').value,
-                    part: currentPart,
-                    question_number: currentIndex + 1,
-                    audio_url: data.publicUrl,
-                    tsr_group_id: selectedGroupId
-                }]);
-
-                if(dbErr) throw dbErr;
-
-                alert("ส่งเรียบร้อย! ไปข้อต่อไปได้เลย");
-                changeQuestion(1);
-
-            } catch(err) {
-                alert("เกิดข้อผิดพลาด: " + err.message);
-            } finally {
-                document.getElementById('btnSend').innerText = "📤 ส่งคำตอบข้อนี้";
-                document.getElementById('btnSend').disabled = false;
+                if(err.message.includes('SSL') || err.message.includes('Permission')) {
+                    alert("⚠️ ต้องเปิดเว็บผ่าน HTTPS และกดอนุญาตไมค์เท่านั้น");
+                }
             }
         }
     </script>
